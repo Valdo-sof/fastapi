@@ -60,3 +60,27 @@ movies=[
 
 def get_movies():
     return movies
+
+@app.get("/movies/{id}", tags=["Home"])
+
+def get_movie(id: int):
+    for movie in movies:
+        if movie["id"] == id:
+            return movie
+
+    return {"message": "Movie not found"}
+
+
+@app.get("/movies/", tags=["Home"])
+
+def get_movie_by_category(gener: str):
+    result = []
+    for movie in movies:
+        if gener in movie["genre"]:
+            result.append(movie)
+    
+    if not result:
+        return {"message": "No movies found for this genre"}
+    
+    return result
+    
