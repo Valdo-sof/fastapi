@@ -1,11 +1,28 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from typing import Optional, List
 
 app = FastAPI()
 
 app.title = "FastAPI application"
 app.description = "This is a simple API to FastAPI usage."
 app.version = "0.1.0"
+
+class Movie(BaseModel):
+    id: int
+    title: str
+    year: int
+    genre: list
+    rating: float
+    director: str
+
+class MovieUpdate(BaseModel):
+    title: str
+    year: int
+    genre: list
+    rating: float
+    director: str    
 
 @app.get("/", tags=["Home"])
 
@@ -58,12 +75,12 @@ movies=[
 
 @app.get("/movies", tags=["Movies"])
 
-def get_movies():
+def get_movies()-> List[Movie]:
     return movies
 
 @app.get("/movies/{id}", tags=["Movies"])
 
-def get_movie(id: int):
+def get_movie(id: int)-> Movie:
     for movie in movies:
         if movie["id"] == id:
             return movie
@@ -73,7 +90,7 @@ def get_movie(id: int):
 
 @app.get("/movies/", tags=["Movies"])
 
-def get_movie_by_category(gener: str):
+def get_movie_by_category(gener: str)-> List[Movie]:
     result = []
     for movie in movies:
         if gener in movie["genre"]:
@@ -87,44 +104,27 @@ def get_movie_by_category(gener: str):
 
 @app.post("/movies/", tags=["Movies"])
 
-def create_movie(id: int = Body(), 
-                 title: str = Body(), 
-                 year: int = Body(), 
-                 genre: list = Body(), 
-                 rating: float = Body(), 
-                 director: str= Body()):
-    new_movies = {
-        "id": id,
-        "title": title,
-        "year": year,
-        "genre": genre,
-        "rating": rating,
-        "director": director
-    }
-    movies.append(new_movies)
+def create_movie(movie: Movie):
+    new_movie = movie.dict()
+    movies.append(new_movie)
     return movies
     
 @app.put("/movies/{id}", tags=["Movies"])
 
-def update_movie(id: int, 
-                 title: str = Body(), 
-                 year: int = Body(), 
-                 genre: list = Body(), 
-                 rating: float = Body(), 
-                 director: str= Body()):
-    for movie in movies:
-        if movie["id"] == id:
-            movie["title"] = title
-            movie["year"] = year
-            movie["genre"] = genre
-            movie["rating"] = rating
-            movie["director"] = director
+def update_movie(id: int, movie: MovieUpdate)-> List[Movie]:
+    for item in movies:
+        if item["id"] == id:
+            item["title"] = movie.title
+            item["year"] = movie.year
+            item["genre"] = movie.genre
+            item["rating"] = movie.rating
+            item["director"] = movie.director
             return movies
 
     return {"message": "Movie not found"}
 
 @app.delete("/movies/{id}", tags=["Movies"])
-def delete_movie(id: int):
+def delete_movie(id: int)-> List[Movie]:
     for movie in movies:
         if movie["id"] == id:
             movies.remove(movie)
