@@ -104,4 +104,30 @@ def create_movie(id: int = Body(),
     movies.append(new_movies)
     return movies
     
-    
+@app.put("/movies/{id}", tags=["Movies"])
+
+def update_movie(id: int, 
+                 title: str = Body(), 
+                 year: int = Body(), 
+                 genre: list = Body(), 
+                 rating: float = Body(), 
+                 director: str= Body()):
+    for movie in movies:
+        if movie["id"] == id:
+            movie["title"] = title
+            movie["year"] = year
+            movie["genre"] = genre
+            movie["rating"] = rating
+            movie["director"] = director
+            return movies
+
+    return {"message": "Movie not found"}
+
+@app.delete("/movies/{id}", tags=["Movies"])
+def delete_movie(id: int):
+    for movie in movies:
+        if movie["id"] == id:
+            movies.remove(movie)
+            return movies
+
+    return {"message": "Movie not found"}
