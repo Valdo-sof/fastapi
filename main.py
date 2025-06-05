@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Path, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import datetime
+
 
 app = FastAPI()
 
@@ -60,9 +61,9 @@ def get_movies()-> List[Movie]:
 
 @app.get("/movies/{id}", tags=["Movies"])
 
-def get_movie(id: int)-> Movie:
+def get_movie(id: int = Path(gt=0))-> Movie | dict:
     for movie in movies:
-        if movie["id"] == id:
+        if movie.id == id:
             return movie.model_dump()
 
     return {"message": "Movie not found"}
@@ -70,10 +71,10 @@ def get_movie(id: int)-> Movie:
 
 @app.get("/movies/", tags=["Movies"])
 
-def get_movie_by_category(gener: str)-> List[Movie]:
+def get_movie_by_category(gener: str = Query(min_length=5, max_length=20))-> List[Movie] | dict:
     result = []
     for movie in movies:
-        if gener in movie["genre"]:
+        if gener in movie.genre:
             result.append(movie)
     
     if not result:
@@ -92,20 +93,20 @@ def create_movie(movie: MovieCreate)-> List[Movie]:
 
 def update_movie(id: int, movie: MovieUpdate)-> List[Movie]:
     for item in movies:
-        if item["id"] == id:
-            item["title"] = movie.title
-            item["year"] = movie.year
-            item["genre"] = movie.genre
-            item["rating"] = movie.rating
-            item["director"] = movie.director
+        if item.id == id:
+            item.title = movie.title
+            item.year = movie.year
+            item.genre = movie.genre
+            item.rating = movie.rating
+            item.director = movie.director
             return [movie.model_dump() for movie in movies]
 
     return {"message": "Movie not found"}
 
 @app.delete("/movies/{id}", tags=["Movies"])
-def delete_movie(id: int)-> List[Movie]:
+def delete_movie(id: int= Path(gt=0))-> List[Movie]:
     for movie in movies:
-        if movie["id"] == id:
+        if movie.id == id:
             movies.remove(movie)
             return [movie.model_dump() for movie in movies]
 
