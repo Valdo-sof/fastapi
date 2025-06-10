@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Body, Path, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import datetime
@@ -50,23 +50,25 @@ class MovieUpdate(BaseModel):
 @app.get("/", tags=["Home"])
 
 def home():
-    return {"message": "Hello World, write your first API with FastAPI!"}
+    return PlainTextResponse("Welcome to the FastAPI application!")
 
 movies:List[Movie] = []
 
 @app.get("/movies", tags=["Movies"])
 
 def get_movies()-> List[Movie]:
-    return [movie.model_dump() for movie in movies]
+    content= [movie.model_dump() for movie in movies]
+    return  JSONResponse(content=content)
 
 @app.get("/movies/{id}", tags=["Movies"])
 
 def get_movie(id: int = Path(gt=0))-> Movie | dict:
     for movie in movies:
         if movie.id == id:
-            return movie.model_dump()
 
-    return {"message": "Movie not found"}
+            return JSONResponse(content=movie.model_dump())
+
+    return JSONResponse(content={"message": "Movie not found"}, status_code=404)
 
 
 @app.get("/movies/", tags=["Movies"])
@@ -87,7 +89,9 @@ def get_movie_by_category(gener: str = Query(min_length=5, max_length=20))-> Lis
 
 def create_movie(movie: MovieCreate)-> List[Movie]:
     movies.append(movie)
-    return [movie.model_dump() for movie in movies]
+    content= [movie.model_dump() for movie in movies]
+    return  JSONResponse(content=content)
+
     
 @app.put("/movies/{id}", tags=["Movies"])
 
@@ -99,7 +103,8 @@ def update_movie(id: int, movie: MovieUpdate)-> List[Movie]:
             item.genre = movie.genre
             item.rating = movie.rating
             item.director = movie.director
-            return [movie.model_dump() for movie in movies]
+    content= [movie.model_dump() for movie in movies]
+    return  JSONResponse(content=content)
 
     return {"message": "Movie not found"}
 
@@ -108,6 +113,12 @@ def delete_movie(id: int= Path(gt=0))-> List[Movie]:
     for movie in movies:
         if movie.id == id:
             movies.remove(movie)
-            return [movie.model_dump() for movie in movies]
+    content= [movie.model_dump() for movie in movies]
+    return  JSONResponse(content=content)
+
 
     return {"message": "Movie not found"}
+
+@app.get("/get_file")
+def get_file():
+    return FileResponse("49631260.pdf")
