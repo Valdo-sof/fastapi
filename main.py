@@ -50,15 +50,15 @@ class MovieUpdate(BaseModel):
 @app.get("/", tags=["Home"])
 
 def home():
-    return PlainTextResponse("Welcome to the FastAPI application!")
+    return PlainTextResponse("Welcome to the FastAPI application!", status_code=200)
 
 movies:List[Movie] = []
 
-@app.get("/movies", tags=["Movies"])
+@app.get("/movies", tags=["Movies"], status_code=200, response_description=" Success List of movies")
 
 def get_movies()-> List[Movie]:
     content= [movie.model_dump() for movie in movies]
-    return  JSONResponse(content=content)
+    return  JSONResponse(content=content, status_code=200)
 
 @app.get("/movies/{id}", tags=["Movies"])
 
@@ -66,7 +66,7 @@ def get_movie(id: int = Path(gt=0))-> Movie | dict:
     for movie in movies:
         if movie.id == id:
 
-            return JSONResponse(content=movie.model_dump())
+            return JSONResponse(content=movie.model_dump(), status_code=200)
 
     return JSONResponse(content={"message": "Movie not found"}, status_code=404)
 
@@ -80,9 +80,9 @@ def get_movie_by_category(gener: str = Query(min_length=5, max_length=20))-> Lis
             result.append(movie)
     
     if not result:
-        return {"message": "No movies found for this genre"}
+        return JSONResponse(content={"message": "No movies found in this genre"}, status_code=404)
     
-    return result
+    return JSONResponse(content=[movie.model_dump() for movie in result], status_code=200)
 
 
 @app.post("/movies/", tags=["Movies"])
@@ -90,7 +90,7 @@ def get_movie_by_category(gener: str = Query(min_length=5, max_length=20))-> Lis
 def create_movie(movie: MovieCreate)-> List[Movie]:
     movies.append(movie)
     content= [movie.model_dump() for movie in movies]
-    return  JSONResponse(content=content)
+    return  JSONResponse(content=content, status_code=201)
 
     
 @app.put("/movies/{id}", tags=["Movies"])
@@ -103,22 +103,21 @@ def update_movie(id: int, movie: MovieUpdate)-> List[Movie]:
             item.genre = movie.genre
             item.rating = movie.rating
             item.director = movie.director
-    content= [movie.model_dump() for movie in movies]
-    return  JSONResponse(content=content)
-
-    return {"message": "Movie not found"}
+        content= [movie.model_dump() for movie in movies]
+        return  JSONResponse(content=content, status_code=200)
+    return JSONResponse(content={"message": "Movie not found"}, status_code=404)
 
 @app.delete("/movies/{id}", tags=["Movies"])
 def delete_movie(id: int= Path(gt=0))-> List[Movie]:
     for movie in movies:
         if movie.id == id:
             movies.remove(movie)
-    content= [movie.model_dump() for movie in movies]
-    return  JSONResponse(content=content)
+        content= [movie.model_dump() for movie in movies]
+        return  JSONResponse(content=content, status_code=200)
 
 
-    return {"message": "Movie not found"}
+    return JSONResponse(content={"message": "Movie not found"}, status_code=404)
 
 @app.get("/get_file")
 def get_file():
-    return FileResponse("49631260.pdf")
+    return FileResponse("49631260.pdf", status_code=200, media_type="application/pdf", filename="49631260.pdf")
