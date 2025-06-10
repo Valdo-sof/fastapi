@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Body, Path, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 import datetime
 
@@ -37,8 +37,15 @@ class MovieCreate(BaseModel):
                 "rating": 8.5,
                 "director": "John Doe"
             }
-        }
+        }  
     } 
+    @validator("title")
+    def validate_title(cls, value):
+        if len(value) < 5:  
+                raise ValueError("Title must be at least 5 characters long")
+        if len(value) > 20:
+                raise ValueError("Title must be at most 20 characters long")
+        return value  
 
 class MovieUpdate(BaseModel):
     title: str
