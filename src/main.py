@@ -5,6 +5,9 @@ from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 import datetime
 from src.routers.movie_router import movie_router
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import os
 
 
 app = FastAPI()
@@ -18,13 +21,19 @@ async def http_error_handler(request, call_next)-> JSONResponse | Response:
     print("Middleware is working")
     return await call_next(request)
 
+statict_path = os.path.join(os.path.dirname(__file__), "static/")
+templates_path = os.path.join(os.path.dirname(__file__), "templates/")
+
+app.mount("/static", StaticFiles(directory=statict_path), name="static")
+templates = Jinja2Templates(directory=templates_path)
+
 
 
 
 @app.get("/", tags=["Home"])
 
-def home():
-    return PlainTextResponse("Welcome to the FastAPI application!", status_code=200)
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "title": "Home Page", "message": "Welcome to FastAPI application!"})
 
 
 
