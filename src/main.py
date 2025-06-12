@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Path, Query, Depends
+from fastapi import FastAPI, Body, Path, Query, Depends, Form
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, FileResponse, Response
 from pydantic import BaseModel, Field, validator
@@ -7,13 +7,19 @@ import datetime
 from src.routers.movie_router import movie_router
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from typing import Annotated
 import os
+from fastapi import HTTPException
+from jose import jwt, JWTError
 
 #ejemplo de dependencias que pueeden ser usadas globalmente en cualquier parteb de la APP 
 def dependency1():
     print("Dependency 1 is working")
 def dependency2():
     print("Dependency 2 is working")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")    
 
 
 app = FastAPI(dependencies=[Depends(dependency1), Depends(dependency2)])
@@ -33,12 +39,36 @@ templates_path = os.path.join(os.path.dirname(__file__), "templates/")
 app.mount("/static", StaticFiles(directory=statict_path), name="static")
 templates = Jinja2Templates(directory=templates_path)
 
+users = {
+    "Osvaldo": {"username":"Osvaldo", "email":"valdo@gmail.com", "password":"1234"},
+    "Karla": {"username":"Karla", "email":"karla@gmail.com", "password":"4321"},
+}
 
+def encode_token(payload: dict) -> str:
+    # This is a placeholder for token encoding logic
+    token=jwt.encode(payload, "mysecretkey", algorithm="HS256")
+    return token
+def decode_token(token: Annotated[str, Depends(oauth2_scheme)]) -> dict:
+    # This is a placeholder for token decoding logic
+    data=jwt.decode(token, "mysecretkey", algorithms=["HS256"])
+    user= users.get(data["username"])
+    return user
 
+@app.post("/token", tags=["Authentication"])
+def login(form_data: Annotated[OAuth2PasswordRequestForm,Depends()]):
+    user= users.get(form_data.username)
+    if not user or user["password"] != form_data.password:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    token= encode_token({"username": user["username"], "email": user["email"]})
+    return {"access_token": token, "token_type": "bearer"}
+
+@app.get("/users/profile", tags=["Authentication"])
+def get_user_profile(my_user: Annotated[dict, Depends(decode_token)]):
+    return my_user
 
 @app.get("/", tags=["Home"])
 
-def home(request: Request):
+def home(request: Request, my_user: Annotated[dict, Depends(decode_token)]):
     return templates.TemplateResponse("index.html", {"request": request, "title": "Home Page", "message": "Welcome to FastAPI application!"})
 
 
