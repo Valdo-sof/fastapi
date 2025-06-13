@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Path, Query, Depends, Form
+from fastapi import FastAPI, Body, Path, Query, Depends, Form, Header
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, FileResponse, Response
 from pydantic import BaseModel, Field, validator
@@ -61,6 +61,21 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm,Depends()]):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     token= encode_token({"username": user["username"], "email": user["email"]})
     return {"access_token": token, "token_type": "bearer"}
+
+def get_headers(
+        access_token: Annotated[str | None,  Header()]= None,
+        user_role: Annotated[str | None, Header()]= None,
+):
+    if access_token!= "mysecrettoken":
+        raise HTTPException(status_code=403, detail="Invalid access token")
+    return {
+        "access_token": access_token,
+        "user_role": user_role
+    }
+
+@app.get("/dashboard")
+def dashboard(headers: Annotated[dict, Depends(get_headers)]):
+    return {"acces_token": headers["access_token"], "user_role": headers["user_role"]}
 
 @app.get("/users/profile", tags=["Authentication"])
 def get_user_profile(my_user: Annotated[dict, Depends(decode_token)]):
