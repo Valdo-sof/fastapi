@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Path, Query, Depends, Form, Header
+from fastapi import FastAPI, Body, Path, Query, Depends, Form, Header, Cookie
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, FileResponse, Response
 from pydantic import BaseModel, Field, validator
@@ -80,6 +80,16 @@ def dashboard(headers: Annotated[dict, Depends(get_headers)]):
 @app.get("/users/profile", tags=["Authentication"])
 def get_user_profile(my_user: Annotated[dict, Depends(decode_token)]):
     return my_user
+
+@app.get("/example")
+def example_cookies():
+    response = JSONResponse(content={"message": "This is an example of setting cookies."})
+    response.set_cookie(key="username", value="Osvaldo", expires=15)
+    return response
+
+@app.get("/cookies", tags=["Cookies"])
+def get_cookies(username: str =Cookie()):
+    return {"username": username}
 
 @app.get("/", tags=["Home"])
 
